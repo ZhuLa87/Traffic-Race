@@ -19,6 +19,12 @@ headers = {
 def download_file(url, download_dir):
     filename = url.split('/')[-1]
     filepath = os.path.join(download_dir, filename)
+    extracted_filepath = filepath[:-3]
+
+    # check if file already exists
+    if os.path.exists(extracted_filepath):
+        print(f'Skipping {filename} as it already exists.')
+        return
 
     try:
         response = requests.get(url, headers=headers, stream=True)
@@ -43,6 +49,7 @@ def download_file(url, download_dir):
             print(f'Failed to extract {filename}: {e}')
     else:
         print(f'Failed to download {filename}: HTTP {response.status_code}')
+    time.sleep(5)                  # delay
 
 base_url = 'https://tisvcloud.freeway.gov.tw/history/motc20/Section/20240606/LiveTraffic_'
 
@@ -51,4 +58,4 @@ for hour in range(24):
         file_number = f'{hour:02}{minute:02}'
         file_url = f'{base_url}{file_number}.xml.gz'
         download_file(file_url, download_dir)
-        time.sleep(5)                  # delay
+        
