@@ -3,20 +3,9 @@ import requests
 import gzip
 import shutil
 import time
+import extract_data
 
-download_dir = 'files'
-if not os.path.exists(download_dir):
-    os.makedirs(download_dir)
-
-headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-    'Accept-Encoding': 'gzip, deflate, br',
-    'Accept': '*/*',
-    'Connection': 'keep-alive'
-}
-
-# download and extract
-def download_file(url, download_dir):
+def download_file(url, download_dir, headers):
     filename = url.split('/')[-1]
     filepath = os.path.join(download_dir, filename)
     extracted_filepath = filepath[:-3]
@@ -49,13 +38,31 @@ def download_file(url, download_dir):
             print(f'Failed to extract {filename}: {e}')
     else:
         print(f'Failed to download {filename}: HTTP {response.status_code}')
-    time.sleep(5)                  # delay
+    time.sleep(5)  # delay
 
-base_url = 'https://tisvcloud.freeway.gov.tw/history/motc20/Section/20240606/LiveTraffic_'
+def main():
+    download_dir = 'files'
+    base_url = 'https://tisvcloud.freeway.gov.tw/history/motc20/Section/20240606/LiveTraffic_'
+    section_id = '0019'
+    output_file = 'data.json'
 
-for hour in range(24):
-    for minute in range(60):
-        file_number = f'{hour:02}{minute:02}'
-        file_url = f'{base_url}{file_number}.xml.gz'
-        download_file(file_url, download_dir)
-        
+    if not os.path.exists(download_dir):
+        os.makedirs(download_dir)
+
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept': '*/*',
+        'Connection': 'keep-alive'
+    }
+
+    for hour in range(24):
+        for minute in range(60):
+            file_number = f'{hour:02}{minute:02}'
+            file_url = f'{base_url}{file_number}.xml.gz'
+            download_file(file_url, download_dir, headers)
+
+    extract_data.extract(download_dir, section_id, output_file)
+
+if __name__ == "__main__":
+    main()
