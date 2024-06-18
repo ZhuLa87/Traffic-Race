@@ -13,7 +13,8 @@ def log_error(message):
 def download_file(url, download_dir, headers, download_date, file_number):
     filename = url.split('/')[-1]
     filepath = os.path.join(download_dir, filename)
-    extracted_filepath = filepath[:-3]
+    new_filename = f'LiveTraffic_{download_date}_{file_number}.xml'
+    extracted_filepath = os.path.join(download_dir, new_filename)
 
     # check if file already exists
     if os.path.exists(extracted_filepath):
@@ -24,7 +25,7 @@ def download_file(url, download_dir, headers, download_date, file_number):
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        error_message = f'Failed to download {filename}: {e}'
+        error_message = f'Failed to download {download_date} | {filename}: {e}'
         print(error_message)
         log_error(error_message)
         return
@@ -34,6 +35,7 @@ def download_file(url, download_dir, headers, download_date, file_number):
             f.write(response.content)
         print(f'Downloaded {filename}')
 
+        # 解壓縮
         try:
             with gzip.open(filepath, 'rb') as f_in:
                 with open(extracted_filepath, 'wb') as f_out:
