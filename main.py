@@ -4,8 +4,13 @@ import gzip
 import shutil
 import time
 import extract_data
+import datetime
 
-def download_file(url, download_dir, headers):
+def log_error(message):
+    with open("error.log", "a") as error_log:
+        error_log.write(f"{datetime.datetime.now()} - {message}\n")
+
+def download_file(url, download_dir, headers, download_date, file_number):
     filename = url.split('/')[-1]
     filepath = os.path.join(download_dir, filename)
     extracted_filepath = filepath[:-3]
@@ -19,7 +24,9 @@ def download_file(url, download_dir, headers):
         response = requests.get(url, headers=headers, stream=True)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
-        print(f'Fail to download {filename}: {e}')
+        error_message = f'Failed to download {filename}: {e}'
+        print(error_message)
+        log_error(error_message)
         return
     
     if response.status_code == 200:
@@ -29,20 +36,31 @@ def download_file(url, download_dir, headers):
 
         try:
             with gzip.open(filepath, 'rb') as f_in:
-                with open(filepath[:-3], 'wb') as f_out:
+                with open(extracted_filepath, 'wb') as f_out:
                     shutil.copyfileobj(f_in, f_out)
             print(f'Extracted {filename[:-3]}')
 
             os.remove(filepath)
+
+            # Rename the extracted file
+            new_filename = f'LiveTraffic_{download_date}_{file_number}.xml'
+            new_filepath = os.path.join(download_dir, new_filename)
+            os.rename(extracted_filepath, new_filepath)
+            print(f'Renamed to {new_filename}')
         except Exception as e:
-            print(f'Failed to extract {filename}: {e}')
+            error_message = f'Failed to extract {filename}: {e}'
+            print(error_message)
+            log_error(error_message)
     else:
-        print(f'Failed to download {filename}: HTTP {response.status_code}')
-    time.sleep(5)  # delay
+        error_message = f'Failed to download {filename}: HTTP {response.status_code}'
+        print(error_message)
+        log_error(error_message)
+    # time.sleep(5)  # delay
 
 def main():
     download_dir = 'files'
-    base_url = 'https://tisvcloud.freeway.gov.tw/history/motc20/Section/20240606/LiveTraffic_'
+    download_date_start = '20230101'
+    download_date_end = '20230131'
     section_id = '0019'
     output_file = 'data.json'
 
@@ -56,11 +74,21 @@ def main():
         'Connection': 'keep-alive'
     }
 
-    for hour in range(24):
-        for minute in range(60):
-            file_number = f'{hour:02}{minute:02}'
-            file_url = f'{base_url}{file_number}.xml.gz'
-            download_file(file_url, download_dir, headers)
+    start_date = datetime.datetime.strptime(download_date_start, '%Y%m%d')
+    end_date = datetime.datetime.strptime(download_date_end, '%Y%m%d')
+    current_date = start_date
+
+    while current_date <= end_date:
+        download_date = current_date.strftime('%Y%m%d')
+        base_url = f'https://tisvcloud.freeway.gov.tw/history/motc20/Section/{download_date}/LiveTraffic_'
+
+        for hour in range(24):
+            for minute in range(60):
+                file_number = f'{hour:02}{minute:02}'
+                file_url = f'{base_url}{file_number}.xml.gz'
+                download_file(file_url, download_dir, headers, download_date, file_number)
+
+        current_date += datetime.timedelta(days=1)
 
     extract_data.extract(download_dir, section_id, output_file)
 
