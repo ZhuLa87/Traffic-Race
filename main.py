@@ -5,6 +5,7 @@ import shutil
 import time
 import extract_data
 import datetime
+import threading
 
 def log_error(message):
     with open("error.log", "a") as error_log:
@@ -59,6 +60,16 @@ def download_file(url, download_dir, headers, download_date, file_number):
         log_error(error_message)
     # time.sleep(5)  # delay
 
+def doanload_concurrently(urls, download_dir, headers, download_date, file_numbers):
+    threads = []
+    for url, file_number in zip(urls, file_numbers):
+        t = threading.Thread(target=download_file, args=(url, download_dir, headers, download_date, file_number))
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
+
 def main():
     download_dir = 'files'
     download_date_start = '20230101'
@@ -84,11 +95,20 @@ def main():
         download_date = current_date.strftime('%Y%m%d')
         base_url = f'https://tisvcloud.freeway.gov.tw/history/motc20/Section/{download_date}/LiveTraffic_'
 
+        urls = []
+        file_numbers = []
         for hour in range(24):
             for minute in range(60):
+                # 沒有2359這個時間點的檔案，所以跳過
+                if hour == 23 and minute == 59:
+                    continue
                 file_number = f'{hour:02}{minute:02}'
                 file_url = f'{base_url}{file_number}.xml.gz'
-                download_file(file_url, download_dir, headers, download_date, file_number)
+                urls.append(file_url)
+                file_numbers.append(file_number)
+
+        # 併發下載
+        doanload_concurrently(urls, download_dir, headers, download_date, file_numbers)
 
         current_date += datetime.timedelta(days=1)
 
