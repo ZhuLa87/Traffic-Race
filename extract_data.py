@@ -1,7 +1,7 @@
 import os
 import xml.etree.ElementTree as ET
 import json
-from datetime import datetime
+import datetime
 
 namespace = {'ns': 'http://traffic.transportdata.tw/standard/traffic/schema/'}
 
@@ -9,7 +9,7 @@ print(f'Processing...')
 
 def extract(download_dir, section_id='0019', output_file='data.json'):
 
-    print("Strarting extract data...")
+    print(f"{datetime.datetime.now()} | Starting extract data...")
 
     # 如果文件存在且不為空，則讀取结果列表
     if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
@@ -52,16 +52,16 @@ def extract(download_dir, section_id='0019', output_file='data.json'):
         except ET.ParseError as e:
             print(f'Failed to parse {file_path}: {e}')
 
-    # save the resault into file
+    # save the result into file
     with open(output_file, 'w', encoding='utf-8') as json_file:
         json.dump(results, json_file, indent=4, ensure_ascii=False)
 
-    print(f"Data extracted and saved to {output_file}")
+    print(f"{datetime.datetime.now()} | Data extracted and saved to {output_file}")
 
 def iso_to_timestamp(iso_time):
-
-    dt = datetime.fromisoformat(iso_time)
+    dt = datetime.datetime.strptime(iso_time, "%Y-%m-%dT%H:%M:%S%z")  # 根據 ISO 格式的日期時間字符串解析
     timestamp = str(int(dt.timestamp()))
-    print(timestamp)
     return timestamp
     
+if __name__ == "__main__":
+    extract('files')

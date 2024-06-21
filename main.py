@@ -73,7 +73,7 @@ def doanload_concurrently(urls, download_dir, headers, download_date, file_numbe
 def main():
     download_dir = 'files'
     download_date_start = '20230101'
-    download_date_end = '20230131'
+    download_date_end = '20231031'
     section_id = '0019'
     output_file = 'data.json'
 
@@ -99,9 +99,6 @@ def main():
         file_numbers = []
         for hour in range(24):
             for minute in range(60):
-                # 沒有2359這個時間點的檔案，所以跳過
-                if hour == 23 and minute == 59:
-                    continue
                 file_number = f'{hour:02}{minute:02}'
                 file_url = f'{base_url}{file_number}.xml.gz'
                 urls.append(file_url)
