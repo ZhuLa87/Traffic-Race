@@ -5,8 +5,6 @@ import datetime
 
 namespace = {'ns': 'http://traffic.transportdata.tw/standard/traffic/schema/'}
 
-print(f'Processing...')
-
 def extract(download_dir, section_id='0019', output_file='data.json'):
 
     print(f"{datetime.datetime.now()} | Starting extract data...")
@@ -43,7 +41,8 @@ def extract(download_dir, section_id='0019', output_file='data.json'):
                     result = {
                         'TravelTime': travel_time,
                         'TravelSpeed': travel_speed,
-                        'DataCollectTime': data_collect_timestamp
+                        'DataCollectTime': data_collect_time,
+                        'DataCollectTimestamp': data_collect_timestamp
                     }
 
                     results.append(result)
